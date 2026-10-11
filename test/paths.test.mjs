@@ -5,8 +5,9 @@ import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
 
-test('SOMA_HOME honors env override and p() joins under it', async () => {
+test('SOMA_HOME honors env override and p() joins under it', async (t) => {
   const home = mkdtempSync(join(tmpdir(), 'soma-'));
+  t.after(() => rmSync(home, { recursive: true, force: true }));
   process.env.SOMA_HOME = home;
   const { SOMA_HOME, p, ensureTree, leadDir } = await import('../bin/lib/paths.mjs?' + Date.now());
   assert.equal(SOMA_HOME(), home);

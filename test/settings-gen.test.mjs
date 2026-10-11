@@ -167,8 +167,9 @@ const worktree = (t) => {
 /** Any non-empty personal list — for tests that assert on the fixed rules only. */
 const SOME = { mcpDenies: ['kite'], teammateAllow: [] };
 
-test('enumerateUserMcpServers reads ~/.claude.json mcpServers', async () => {
+test('enumerateUserMcpServers reads ~/.claude.json mcpServers', async (t) => {
   const home = mkdtempSync(join(tmpdir(), 'home-'));
+  t.after(() => rmSync(home, { recursive: true, force: true }));
   writeFileSync(join(home, '.claude.json'), JSON.stringify({ mcpServers: { kite: {}, notion: {} } }));
   const s = await import('../bin/lib/settings-gen.mjs?' + Date.now());
   assert.deepEqual(s.enumerateUserMcpServers(home).sort(), ['kite', 'notion']);
@@ -194,8 +195,9 @@ test('enumerateUserMcpServers reads ~/.claude.json mcpServers', async () => {
  * `bin/hooks/lead-gate.mjs` arm (b2), which can tell a lead from a teammate by session id.
  * A static deny cannot: they share one cwd, therefore one settings file.
  */
-test('enumerateUserMcpServers never returns soma — the bus must not be denied to its own lead', async () => {
+test('enumerateUserMcpServers never returns soma — the bus must not be denied to its own lead', async (t) => {
   const home = mkdtempSync(join(tmpdir(), 'home-'));
+  t.after(() => rmSync(home, { recursive: true, force: true }));
   writeFileSync(join(home, '.claude.json'), JSON.stringify({
     mcpServers: { soma: {}, kite: {} },
     projects: { '/repo': { mcpServers: { soma: {}, mysql_write: {} } } },
@@ -466,12 +468,12 @@ test('roots: a bad roots argument is refused by name, never read as "no seats"',
     'an empty root would resolve() to the process cwd and answer about the wrong directory');
 });
 
-test('worktree guardrails deny personal MCPs + raw PR create, allow soma-pr', async () => {
-  process.env.SOMA_HOME = mkdtempSync(join(tmpdir(), 'soma-'));
+test('worktree guardrails deny personal MCPs + raw PR create, allow soma-pr', async (t) => {
+  somaHome(t);
   const { ensureTree } = await import('../bin/lib/paths.mjs?' + Date.now());
   ensureTree();
   const s = await import('../bin/lib/settings-gen.mjs?' + Date.now());
-  const dir = mkdtempSync(join(tmpdir(), 'wt-'));
+  const dir = worktree(t);
   s.writeWorktreeGuardrails(dir, { mcpDenies: ['kite', 'mysql'], teammateAllow: [] });
   const j = JSON.parse(readFileSync(join(dir, '.claude', 'settings.local.json'), 'utf8'));
   assert.ok(j.permissions.deny.includes('mcp__kite'));
@@ -1184,8 +1186,10 @@ test('guardrails never clobber .claude/.gitignore, and create it when absent', a
  * permissions block, or one denying something else, is also a finding: this file binds the
  * whole fleet, so any permission rule written here is a fleet-wide rule wearing a lead's name.
  */
-test('lead settings carry NO permissions block at all, and pin model opus', async () => {
-  process.env.SOMA_HOME = mkdtempSync(join(tmpdir(), 'soma-'));
+test('lead settings carry NO permissions block at all, and pin model opus', async (t) => {
+  const home = mkdtempSync(join(tmpdir(), 'soma-'));
+  t.after(() => rmSync(home, { recursive: true, force: true }));
+  process.env.SOMA_HOME = home;
   const { ensureTree, leadDir } = await import('../bin/lib/paths.mjs?' + Date.now());
   ensureTree(); mkdirSync(leadDir('cr-1'), { recursive: true });
   const s = await import('../bin/lib/settings-gen.mjs?' + Date.now());

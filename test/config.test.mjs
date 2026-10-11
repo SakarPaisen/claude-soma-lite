@@ -82,8 +82,10 @@ function hammerWriter(home, rounds) {
 // The original test, verbatim.
 // ---------------------------------------------------------------------------
 
-test('defaults expose max_leads 10 and stagger 90; writeConfig merges', async () => {
-  process.env.SOMA_HOME = mkdtempSync(join(tmpdir(), 'soma-'));
+test('defaults expose max_leads 10 and stagger 90; writeConfig merges', async (t) => {
+  const home = mkdtempSync(join(tmpdir(), 'soma-'));
+  t.after(() => rmSync(home, { recursive: true, force: true }));
+  process.env.SOMA_HOME = home;
   const { ensureTree } = await import('../bin/lib/paths.mjs?' + Date.now());
   ensureTree();
   const c = await import('../bin/lib/config.mjs?' + Date.now());

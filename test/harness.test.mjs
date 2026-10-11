@@ -23,9 +23,11 @@ test('validateHarnessReport requires harness_id and known budget_class', async (
   assert.equal(h.validateHarnessReport({ harness_id: 'H1', budget_class: 'bogus' }).ok, false);
 });
 
-test('writeStanding embeds the pins and harness-first directive', async () => {
-  const { mkdtempSync } = await import('node:fs'); const { tmpdir } = await import('node:os'); const { join } = await import('node:path');
-  process.env.SOMA_HOME = mkdtempSync(join(tmpdir(), 'soma-'));
+test('writeStanding embeds the pins and harness-first directive', async (t) => {
+  const { mkdtempSync, rmSync } = await import('node:fs'); const { tmpdir } = await import('node:os'); const { join } = await import('node:path');
+  const home = mkdtempSync(join(tmpdir(), 'soma-'));
+  t.after(() => rmSync(home, { recursive: true, force: true }));
+  process.env.SOMA_HOME = home;
   const { ensureTree } = await import('../bin/lib/paths.mjs?' + Date.now()); ensureTree();
   const s = await import('../bin/lib/standing.mjs?' + Date.now());
   const fp = s.writeStanding({ id: 'cr-1', repo: 'r', brief: 'x', verify_hint: 'yarn typecheck' });

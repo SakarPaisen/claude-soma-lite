@@ -20,8 +20,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import process from 'node:process';
 
-test('preTrust sets hasTrustDialogAccepted true, preserving existing keys', async () => {
+test('preTrust sets hasTrustDialogAccepted true, preserving existing keys', async (t) => {
   const home = mkdtempSync(join(tmpdir(), 'home-'));
+  t.after(() => rmSync(home, { recursive: true, force: true }));
   writeFileSync(join(home, '.claude.json'), JSON.stringify({ projects: { '/other': { x: 1 } }, foo: 'bar' }));
   const { preTrust } = await import('../bin/lib/pretrust.mjs?' + Date.now());
   preTrust('/w/cr-1', home);
